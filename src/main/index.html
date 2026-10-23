@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consulta de Endereço MAC</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    .form, .result {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    label, input {
+      font-size: 1.1em;
+    }
+
+    input {
+      box-sizing: border-box;
+      padding: 10px;
+      margin: 10px 0;
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1.1em;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .result p {
+      font-size: 1.1em;
+      color: #333;
+      overflow-wrap: anywhere;
+    }
+
+    .result span {
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>Consultar Fabricante pelo MAC</h1>
+
+<div class="form">
+  <label for="mac">Digite o endereço MAC:</label>
+  <input type="text" id="mac"
+         placeholder="Ex: 00:1A:2B:3C:4D:5E">
+
+  <button onclick="buscarMac()">Buscar</button>
+</div>
+
+<div class="result">
+  <h2>Resultado da consulta:</h2>
+
+  <p><strong>Endereço MAC:</strong>
+    <span id="macInfo">-</span>
+  </p>
+
+  <p><strong>Fabricante:</strong>
+    <span id="fabricante">-</span>
+  </p>
+
+  <p><strong>Endereço do fabricante:</strong>
+    <span id="endereco">-</span>
+  </p>
+
+  <p><strong>País do fabricante:</strong>
+    <span id="pais">-</span>
+  </p>
+
+  <p><strong>Data de registro/atualização:</strong>
+    <span id="data">-</span>
+  </p>
+
+  <p id="mensagem"></p>
+</div>
+
+<script>
+  function buscarMac() {
+    const mac = document.getElementById("mac").value.trim();
+    const mensagem = document.getElementById("mensagem");
+
+    if (!/^(?:[0-9a-fA-F]{2}[:-]?){5}[0-9a-fA-F]{2}$/.test(mac)) {
+      mensagem.textContent = "Digite um MAC válido.";
+      return;
+    }
+
+    mensagem.textContent = "Consultando...";
+
+    const script = document.createElement("script");
+    const callback = "resultadoMac";
+
+    window[callback] = function(dados) {
+      document.getElementById("macInfo").textContent = mac;
+
+      if (!dados.success || !dados.found) {
+        mensagem.textContent = "Fabricante não encontrado.";
+      } else {
+        document.getElementById("fabricante").textContent =
+                dados.company || "Não informado";
+
+        document.getElementById("endereco").textContent =
+                dados.address || "Não informado";
+
+        document.getElementById("pais").textContent =
+                dados.country || "Não informado";
+
+        document.getElementById("data").textContent =
+                dados.updated || "Não informado";
+
+        mensagem.textContent = "Consulta realizada!";
+      }
+
+      delete window[callback];
+      script.remove();
+    };
+
+    script.src = "https://api.maclookup.app/v2/macs/" +
+            encodeURIComponent(mac) +
+            "?format=jsonp&callback=" + callback;
+
+    script.onerror = function() {
+      mensagem.textContent =
+              "Não foi possível acessar a API. Verifique a conexão.";
+      delete window[callback];
+      script.remove();
+    };
+
+    document.body.appendChild(script);
+  }
+</script>
+
+</body>
+</html>
